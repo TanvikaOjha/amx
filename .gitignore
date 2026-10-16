@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+*.sqlite3
+*.db
+
+# Node / Foundry
+node_modules/
+out/
+cache/
+broadcast/
+.env
+
+# MCP & Logs
+*.log
