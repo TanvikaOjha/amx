@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {ERC721URIStorage, ERC721} "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import {ERC721URIStorage, ERC721} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 contract  ERC8004Identity is ERC721URIStorage {
     struct MetadataEntry {
@@ -21,7 +21,8 @@ contract  ERC8004Identity is ERC721URIStorage {
     uint private _lastAgentId;
      //agentId => key => value
     mapping(uint256 => mapping(string => bytes)) private _metadata;
-
+    mapping(uint256 => uint256) private _feedbackCount;
+    
     //reputation: agentId => client => latestFeedback
     mapping(uint256 => mapping(address => Feedback)) private _feedback;
     mapping(uint256 => uint256) private _scoreSum;

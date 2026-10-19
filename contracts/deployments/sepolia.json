@@ -1,0 +1,19 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "deployer": "0x83Daadc5ABe552725f2613a1Dd3Cfc35C42f881f",
+  "deployedAt": "2026-10-18T12:26:13.231Z",
+  "contracts": {
+    "ERC8004Identity": "0xbE0C1abE04f11Ef80215910E8D3eCBAcaFc746cD",
+    "PaymentChannel": "0x3D62427e47e8CCcA306ca340aab97C04bE101ef5"
+  },
+  "paymentChannel": {
+    "minChallengePeriodSeconds": 3600,
+    "eip712Domain": {
+      "name": "AMXPaymentChannel",
+      "version": "1",
+      "chainId": 11155111,
+      "verifyingContract": "0x3D62427e47e8CCcA306ca340aab97C04bE101ef5"
+    }
+  }
+}
