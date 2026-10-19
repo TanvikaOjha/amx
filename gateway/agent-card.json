@@ -1,0 +1,10 @@
+{
+  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  "name": "Agent-Mesh-X Demo Agent",
+  "description": "A pay-per-call demo agent. Calls are paid with off-chain EIP-712 vouchers over an on-chain payment channel (HTTP 402) and audited on the Hedera Consensus Service.",
+  "services": [],
+  "x402Support": false,
+  "active": true,
+  "registrations": [],
+  "supportedTrust": ["reputation"]
+}

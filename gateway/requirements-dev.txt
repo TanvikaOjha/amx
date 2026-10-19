@@ -1,0 +1,6 @@
+-r requirements.txt
+pytest==9.1.1
+# scripts/open_channel.py talks to the chain:
+web3==8.0.0
+# tests/test_gateway_integration.py runs the REAL gateway app in-process (skipped automatically if these are missing):
+-r ../gateway/requirements.txt
