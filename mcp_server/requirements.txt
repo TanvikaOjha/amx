@@ -1,0 +1,4 @@
+mcp==2.3.0
+httpx==0.28.1
+eth-account==0.14.0
+pydantic-settings==2.16.0

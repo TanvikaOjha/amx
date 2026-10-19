@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "agent-mesh-x": {
+      "command": "/ABSOLUTE/PATH/TO/agent-mesh-x/mcp_server/.venv/bin/python",
+      "args": ["/ABSOLUTE/PATH/TO/agent-mesh-x/mcp_server/server.py"]
+    }
+  }
+}{
+  "mcpServers": {
+    "agent-mesh-x": {
+      "command": "/ABSOLUTE/PATH/TO/agent-mesh-x/mcp_server/.venv/bin/python",
+      "args": ["/ABSOLUTE/PATH/TO/agent-mesh-x/mcp_server/server.py"]
+    }
+  }
+}
