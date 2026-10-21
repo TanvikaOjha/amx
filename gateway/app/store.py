@@ -135,6 +135,22 @@ class Ledger:
             conn.close()
         return None if row is None else (json.loads(row["voucher_json"]), row["signature"])
 
+    def get_response(self, channel_id: str, nonce: int) -> str | None:
+        """The stored response JSON of a COMPLETED call, or None (unknown / still reserved).
+
+        Used when an HCS confirmation lands after the request returned: the caller reads the stored
+        response, swaps in the HCS fields, and writes it back with update_response().
+        """
+        conn = self._connect()
+        try:
+            row = conn.execute(
+                "SELECT response_json FROM vouchers WHERE channel_id = ? AND nonce = ? AND status = 'completed'",
+                (channel_id, nonce),
+            ).fetchone()
+        finally:
+            conn.close()
+        return None if row is None else row["response_json"]
+
     def lookup_replay(
         self, channel_id: str, nonce: int, request_hash: str, cumulative: int, signer: str
     ) -> Replay | None:

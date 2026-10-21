@@ -23,6 +23,7 @@ from .canonical import (
     request_hash as compute_request_hash,
 )
 from .config import Settings
+from .hedera_logger import HcsPublisher
 from .registry import STATUS_OPEN, ChainReader, ChainUnavailable
 from .schemas import (
     REASON_CODES,
@@ -37,10 +38,10 @@ from .store import InProgress, Ledger, LedgerRejection, Replay, Reserved
 log = logging.getLogger("amx.gateway")
 
 
-//constants
+# Constants
 TICKET_HEADER = "X-402-Payment-Ticket"
 CHANNEL_HINT_HEADER = "X-AMX-Channel-Id"
-_CHANNEL_ID_RE = re.compile(r"^0x[0-9a-f]{64}$") //0x-64 lowercase hexadecimal chars after it
+_CHANNEL_ID_RE = re.compile(r"^0x[0-9a-f]{64}$")  # "0x" followed by 64 lowercase hex characters
 
 
 # Errors
@@ -104,6 +105,7 @@ class AppContext:
     chain: ChainReader
     ledger: Ledger
     limiter: RateLimiter
+    hcs: HcsPublisher | None = None  # None = HCS audit logging disabled
 
     @property
     def domain(self) -> VoucherDomain:
