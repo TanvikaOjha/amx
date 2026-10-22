@@ -4,6 +4,7 @@ import { GeistSans } from 'geist/font/sans';
 import { Footer } from '@/components/Footer';
 import { Navbar } from '@/components/Navbar';
 import { Providers } from '@/components/Providers';
+import { Suspense } from 'react';
 import './global.css';
 
 export const metadata: Metadata = {
@@ -16,7 +17,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`}>
       <body className="font-sans">
         <Providers>
+          <Suspense fallback={<div className="h-16" />}>
           <Navbar />
+          </Suspense>
           <main className="mx-auto min-h-[70vh] max-w-7xl px-4 py-10 sm:px-6">{children}</main>
           <Footer />
         </Providers>

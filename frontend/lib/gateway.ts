@@ -9,7 +9,7 @@ import {
   TARGET,
   TICKET_HEADER,
 } from './constants';
-// import type { SignedState } from './signedState';
+import type { SignedState } from './signedState';
 
 export class AmxError extends Error {
   constructor(
