@@ -4,7 +4,7 @@ import { GeistSans } from 'geist/font/sans';
 import { Footer } from '@/components/Footer';
 import { Navbar } from '@/components/Navbar';
 import { Providers } from '@/components/Providers';
-import './globals.css';
+import './global.css';
 
 export const metadata: Metadata = {
   title: { default: 'Agent-Mesh-X', template: '%s · Agent-Mesh-X' },

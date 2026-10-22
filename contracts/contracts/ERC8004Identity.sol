@@ -33,7 +33,7 @@ contract  ERC8004Identity is ERC721URIStorage {
 
     event FeedbackGiven(uint256 indexed agentId, address indexed client, uint8 score, string tag);
 
-     error EmptyMetadataKey();
+    error EmptyMetadataKey();
     error InvalidPubKey();
     error ScoreOutOfRange(uint8 score);
     error TagTooLong(uint256 length);

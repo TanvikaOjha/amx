@@ -1,0 +1,23 @@
+services:
+  gateway:
+    build:
+      context: ./gateway
+    env_file:
+      - ./gateway/.env
+    environment:
+      # Overrides any DB_PATH in gateway/.env so the ledger always lives on the volume.
+      DB_PATH: /data/amx_gateway.sqlite3
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - gateway-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys, urllib.request; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health', timeout=5).status == 200 else 1)"]
+      interval: 15s
+      timeout: 6s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  gateway-data:

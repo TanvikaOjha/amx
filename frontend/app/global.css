@@ -1,4 +1,9 @@
-import @tailwind
+
+@import "tailwindcss";
+
+@theme {
+  --color-ink-950: #09090b;
+}
 
 :root {
   color-scheme: dark;
@@ -10,7 +15,11 @@ html {
 
 body {
   @apply bg-ink-950 text-slate-200 antialiased;
-  background-image: radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.07) 1px, transparent 0);
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(148, 163, 184, 0.07) 1px,
+    transparent 0
+  );
   background-size: 28px 28px;
 }
 
