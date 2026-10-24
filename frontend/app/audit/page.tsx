@@ -3,7 +3,7 @@
 import { ExternalLink, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { HCSFeedTable } from '@/components/HCSFeedTable';
-import { Button, Field, Input, Notice, Panel } from '@/components/ui';
+import { Button, Field, Input, Notice, Panel, Stat } from '@/components/ui';
 import { useHcsFeed } from '@/hooks/useHcsFeed';
 import { HCS_TOPIC_ID, HEDERA_NETWORK } from '@/lib/constants';
 import { hashscanTopicUrl } from '@/lib/hedera';
@@ -19,6 +19,11 @@ export default function AuditPage() {
   const topic = /^\d+\.\d+\.\d+$/.test(topicInput.trim()) ? topicInput.trim() : (HCS_TOPIC_ID ?? fromHistory);
   const sequence = /^\d+$/.test(seqInput) && Number(seqInput) > 0 ? Number(seqInput) : undefined;
   const feed = useHcsFeed(topic, { limit: 25, sequence, refetchMs: auto && sequence === undefined ? 8000 : false });
+
+  const rows = feed.data ?? [];
+  const valid = rows.filter((r) => r.verification.state === 'valid').length;
+  const bad = rows.filter((r) => r.verification.state === 'wrong_signer' || r.verification.state === 'bad_signature').length;
+  const queued = history.filter((h) => h.hcsStatus === 'pending').length;
 
   return (
     <div className="space-y-8">
@@ -61,7 +66,19 @@ export default function AuditPage() {
         </div>
       </Panel>
 
-      {!topic && <Notice tone="warn">No topic yet. Create one with <code className="font-mono">python scripts/create_topic.py</code> in the gateway folder, then paste its id above.</Notice>}
+      {topic && feed.data && (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Stat label="Verified in your browser" value={valid} hint="Signed by the agent’s on-chain key" />
+          <Stat label="Failed verification" value={bad} hint={bad ? 'Wrong signer or bad signature: inspect these rows' : 'None in this view'} />
+          <Stat label="Queued from this browser" value={queued} hint="Result delivered; proof still retrying" />
+        </div>
+      )}
+
+      {!topic && (
+        <Notice tone="warn">
+          No topic yet. Create one with <code className="font-mono">python scripts/create_topic.py</code> in the gateway folder, then paste its id above.
+        </Notice>
+      )}
       {feed.isError && <Notice tone="bad">Could not read the mirror node: {feed.error instanceof Error ? feed.error.message : 'unknown error'}</Notice>}
       {feed.isLoading && topic && <div className="h-48 animate-pulse rounded-xl bg-ink-900" />}
       {feed.data && <HCSFeedTable rows={feed.data} />}

@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+const GATEWAY_URL = (process.env.GATEWAY_URL ?? "http://localhost:8000").replace(/\/$/, "");
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -7,6 +8,9 @@ const nextConfig: NextConfig = {
   },
   cacheComponents: true,
   partialPrefetching: true,
+  async rewrites() {
+    return [{ source: "/api/gateway/:path*", destination: `${GATEWAY_URL}/:path*` }];
+  },
   turbopack: {
     rules: {
       "*.css": {

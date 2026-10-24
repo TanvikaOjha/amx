@@ -11,10 +11,11 @@ import { cn } from '@/lib/utils';
 import { Button } from './ui';
 
 const LINKS = [
-  { href: '/dashboard', label: 'Dashboard' },
   { href: '/agents', label: 'Agents' },
   { href: '/channels', label: 'Channels' },
+  { href: '/dashboard', label: 'Dashboard' },
   { href: '/audit', label: 'Audit log' },
+  { href: '/protocol', label: 'Protocol' },
 ];
 
 export function Navbar() {

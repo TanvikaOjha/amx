@@ -1,18 +1,30 @@
 'use client';
 
 import { ArrowDownToLine, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { isHex, parseEther, type Hex } from 'viem';
+import { useQueryClient } from '@tanstack/react-query';
 import { PaymentChannelCard } from '@/components/PaymentChannelCard';
-import { Button, EmptyState, Field, Input, Notice, Panel, PanelTitle, Select, TxStatus } from '@/components/ui';
+import { Button, EmptyState, Field, Input, Notice, Panel, PanelTitle, Select, Stat, TxStatus } from '@/components/ui';
 import { useChannelActions, useMinChallengePeriod, useMyChannels, usePending } from '@/hooks/usePaymentChannel';
 import { useWalletReady } from '@/hooks/useWalletReady';
 import { errorMessage, readChannel, rememberChannel } from '@/lib/chain';
-import { GATEWAY_AGENT_ID } from '@/lib/constants';
+import { CHANNEL_STATUS, GATEWAY_AGENT_ID } from '@/lib/constants';
 import { formatAmount, formatDuration } from '@/lib/format';
-import { useQueryClient } from '@tanstack/react-query';
 
 const PERIODS = [3600, 6 * 3600, 24 * 3600, 7 * 86400];
+const TABS = [
+  ['all', 'All'],
+  ['open', 'Open'],
+  ['closing', 'Closing'],
+  ['closed', 'Closed'],
+] as const;
+type Tab = (typeof TABS)[number][0];
+const STATUS_OF: Record<Exclude<Tab, 'all'>, number> = {
+  open: CHANNEL_STATUS.Open,
+  closing: CHANNEL_STATUS.Closing,
+  closed: CHANNEL_STATUS.Closed,
+};
 
 export default function ChannelsPage() {
   const wallet = useWalletReady();
@@ -23,12 +35,20 @@ export default function ChannelsPage() {
   const actions = useChannelActions(wallet.address);
   const withdrawal = useChannelActions(wallet.address); // separate status line for withdraw
 
+  const [tab, setTab] = useState<Tab>('all');
   const [agentIdInput, setAgentIdInput] = useState(GATEWAY_AGENT_ID.toString());
   const [deposit, setDeposit] = useState('0.0001');
   const [period, setPeriod] = useState(3600);
   const [addId, setAddId] = useState('');
   const [addError, setAddError] = useState<string | null>(null);
   const [openedId, setOpenedId] = useState<Hex | null>(null);
+
+  const all = useMemo(() => channels.data ?? [], [channels.data]);
+  const shown = tab === 'all' ? all : all.filter((c) => c.status === STATUS_OF[tab]);
+  const openCount = all.filter((c) => c.status === CHANNEL_STATUS.Open).length;
+  const escrow = all.filter((c) => c.status !== CHANNEL_STATUS.Closed).reduce((s, c) => s + c.deposit, 0n);
+  const claimed = all.filter((c) => c.status === CHANNEL_STATUS.Closing).reduce((s, c) => s + c.claimed, 0n);
+  const readyToFinalize = all.filter((c) => c.status === CHANNEL_STATUS.Closing && Number(c.closeDeadline) * 1000 <= Date.now()).length;
 
   const min = Number(minPeriod.data ?? 3600n);
   const periods = PERIODS.filter((p) => p >= min);
@@ -42,6 +62,7 @@ export default function ChannelsPage() {
   }
   const agentOk = /^\d{1,18}$/.test(agentIdInput) && BigInt(agentIdInput) > 0n;
   const canOpen = wallet.ready && agentOk && depositWei !== null && depositWei > 0n;
+  const pendingWei = pending.data ?? 0n;
 
   async function open() {
     setOpenedId(null);
@@ -65,19 +86,27 @@ export default function ChannelsPage() {
     }
   }
 
-  const pendingWei = pending.data ?? 0n;
-
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight text-white">Payment channels</h1>
         <p className="mt-1 max-w-2xl text-slate-400">
-          A channel is a deposit locked in the contract for one agent. Each call you make is a signed voucher against that deposit; only the final total is ever settled on-chain.
+          Each channel is a deposit locked for one agent. Calls are signed vouchers against it; only the final total settles on-chain.
         </p>
       </div>
 
       {!wallet.isConnected && <Notice tone="warn">Connect a wallet to open and manage channels.</Notice>}
       {wallet.wrongNetwork && <Notice tone="warn">Switch your wallet to the app’s network first.</Notice>}
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Stat label="In escrow" value={wallet.isConnected ? formatAmount(escrow) : '—'} hint={`${openCount} open channel${openCount === 1 ? '' : 's'}`} />
+        <Stat
+          label="Claimed during closes"
+          value={wallet.isConnected ? formatAmount(claimed) : '—'}
+          hint={readyToFinalize ? `${readyToFinalize} ready to finalize` : 'Agents submit vouchers inside the window'}
+        />
+        <Stat label="Withdrawable" value={wallet.isConnected ? formatAmount(pendingWei) : '—'} hint="Refunds and payouts from settled channels" />
+      </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
         <Panel>
@@ -104,7 +133,7 @@ export default function ChannelsPage() {
             <TxStatus state={actions.state} />
             {openedId && (
               <Notice tone="good">
-                Channel opened: <span className="break-all font-mono text-xs">{openedId}</span>. It is listed below, and you can pay from it on the agent page.
+                Channel opened: <span className="break-all font-mono text-xs">{openedId}</span>
               </Notice>
             )}
           </div>
@@ -112,8 +141,10 @@ export default function ChannelsPage() {
 
         <Panel className="flex flex-col justify-between">
           <div>
-            <PanelTitle icon={<ArrowDownToLine className="h-5 w-5" aria-hidden />}>Withdrawable balance</PanelTitle>
-            <p className="text-sm text-slate-400">Refunds from closed channels (or payouts, if you own an agent) wait here until you withdraw them.</p>
+            <PanelTitle icon={<ArrowDownToLine className="h-5 w-5" aria-hidden />}>Withdraw</PanelTitle>
+            <p className="text-sm text-slate-400">
+              Settling a channel credits a balance inside the contract. Funds only reach your wallet when you withdraw. If you own an agent, its payouts wait here too.
+            </p>
             <div className="my-6 font-mono text-4xl font-semibold tabular-nums text-white">{wallet.isConnected ? formatAmount(pendingWei) : '—'}</div>
           </div>
           <div className="space-y-3">
@@ -126,8 +157,15 @@ export default function ChannelsPage() {
       </div>
 
       <section className="space-y-4">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <h2 className="text-lg font-semibold text-slate-100">Your channels</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex gap-1.5" role="group" aria-label="Filter channels by status">
+            {TABS.map(([key, label]) => (
+              <Button key={key} size="sm" variant={tab === key ? 'primary' : 'secondary'} aria-pressed={tab === key} onClick={() => setTab(key)}>
+                {label}
+                {key !== 'all' && <span className="font-mono opacity-70">{all.filter((c) => c.status === STATUS_OF[key]).length}</span>}
+              </Button>
+            ))}
+          </div>
           {wallet.isConnected && (
             <div className="flex w-full gap-2 sm:w-auto">
               <Input aria-label="Channel id to add" placeholder="Add a channel by id (0x…)" value={addId} onChange={(e) => setAddId(e.target.value)} className="font-mono sm:w-80" />
@@ -138,11 +176,19 @@ export default function ChannelsPage() {
           )}
         </div>
         {addError && <Notice tone="bad">{addError}</Notice>}
-        {channels.isError && <Notice tone="warn">Could not scan the chain for your channels ({errorMessage(channels.error)}). Channels you open here are still remembered; set NEXT_PUBLIC_DEPLOY_BLOCK or a dedicated RPC URL to improve discovery.</Notice>}
+        {channels.isError && (
+          <Notice tone="warn">
+            Could not scan the chain for your channels ({errorMessage(channels.error)}). Channels opened here are still remembered; set NEXT_PUBLIC_DEPLOY_BLOCK or a dedicated RPC URL to improve discovery.
+          </Notice>
+        )}
         {channels.isLoading && <div className="h-40 animate-pulse rounded-xl bg-ink-900" />}
-        {wallet.isConnected && !channels.isLoading && (channels.data?.length ?? 0) === 0 && <EmptyState title="No channels yet">Open one above to start paying for agent calls.</EmptyState>}
+        {wallet.isConnected && !channels.isLoading && shown.length === 0 && (
+          <EmptyState title={all.length ? 'No channels in this state' : 'No channels yet'}>
+            {all.length ? 'Try another tab.' : 'Open one above to start paying for agent calls.'}
+          </EmptyState>
+        )}
         <div className="grid gap-6 md:grid-cols-2">
-          {(channels.data ?? []).map((c) => (
+          {shown.map((c) => (
             <PaymentChannelCard key={c.id} channel={c} />
           ))}
         </div>
